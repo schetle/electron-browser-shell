@@ -339,9 +339,17 @@ export class TabsAPI {
     const tab = this.store.getTabById(tabId)
     if (!tab) return
 
-    const activeTab = this.store.getActiveTabFromWebContents(tab)
-    const activeChanged = activeTab?.id !== tabId
-    if (!activeChanged) return
+    // The issue here is that, getActiveTabFromWebContents will already be reflecting the newly activated tab
+    // therefore, activeChanged will be false and the rest of the code will not function.
+    // For now, we will take the position of resetting the cache each activation.
+    // Due to the nature of the onActivated calls, it's unlikely to be called in situations we wouldn't want
+    // the cache to be cleared anyway. I've left he code here for the time being
+    // /* Begin Code */
+    // const activeTab = this.store.getActiveTabFromWebContents(tab)
+    // const activeChanged = activeTab?.id !== tabId
+    // debug(`onActivated: active changed: old activeTab = ${activeTab?activeTab.id : null}`)
+    // if (!activeChanged) return
+    // /* End Code */
 
     const win = this.store.tabToWindow.get(tab)
 
