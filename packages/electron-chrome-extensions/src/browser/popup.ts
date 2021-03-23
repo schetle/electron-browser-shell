@@ -1,4 +1,4 @@
-import { BrowserWindow, Session } from 'electron'
+import { BrowserWindow, Session, webContents } from 'electron'
 
 const debug = require('debug')('electron-chrome-extensions:popup')
 
@@ -13,6 +13,7 @@ interface PopupViewOptions {
   extensionId: string
   session: Session
   parent: BrowserWindow
+  sender: webContents
   url: string
   anchorRect: PopupAnchorRect
 }
@@ -29,6 +30,7 @@ export class PopupView {
 
   browserWindow?: BrowserWindow
   parent?: BrowserWindow
+  sender?: webContents
   extensionId: string
 
   private anchorRect: PopupAnchorRect
@@ -39,6 +41,7 @@ export class PopupView {
 
   constructor(opts: PopupViewOptions) {
     this.parent = opts.parent
+    this.sender = opts.sender
     this.extensionId = opts.extensionId
     this.anchorRect = opts.anchorRect
 
@@ -176,14 +179,26 @@ export class PopupView {
   }
 
   private updatePosition() {
-    if (!this.browserWindow || !this.parent) return
+    if (!this.browserWindow || !this.sender) return
 
-    const winBounds = this.parent.getBounds()
-    const viewBounds = this.browserWindow.getBounds()
+    if (this.sender) {
+      const webcontents = webContents.fromId(this.sender.id)
 
-    // TODO: support more orientations than just top-right
-    let x = winBounds.x + this.anchorRect.x + this.anchorRect.width - viewBounds.width
-    let y = winBounds.y + this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING
+      if (webcontents) {
+        const window = BrowserWindow.fromWebContents(webcontents)
+        if (window) {
+          const winBounds = window.getBounds()
+          console.log(winBounds);
+          this.anchorRect.x = this.anchorRect.x + winBounds.x
+          this.anchorRect.y = this.anchorRect.y + winBounds.y
+        }
+      }
+    }
+
+    const viewBounds = this.browserWindow.getBounds(); // TODO: support more orientations than just top-right
+
+    let x = this.anchorRect.x + this.anchorRect.width - viewBounds.width;
+    let y = this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING; // Convert to ints
 
     // Convert to ints
     x = Math.floor(x)

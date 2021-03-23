@@ -243,6 +243,7 @@ export class BrowserActionAPI {
         extensionId,
         session: this.store.session,
         parent: win,
+        sender: sender,
         url: popupUrl,
         anchorRect,
       })
