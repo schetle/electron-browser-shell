@@ -188,17 +188,16 @@ export class PopupView {
         const window = BrowserWindow.fromWebContents(webcontents)
         if (window) {
           const winBounds = window.getBounds()
-          console.log(winBounds);
           this.anchorRect.x = this.anchorRect.x + winBounds.x
           this.anchorRect.y = this.anchorRect.y + winBounds.y
         }
       }
     }
 
-    const viewBounds = this.browserWindow.getBounds(); // TODO: support more orientations than just top-right
+    const viewBounds = this.browserWindow.getBounds() // TODO: support more orientations than just top-right
 
-    let x = this.anchorRect.x + this.anchorRect.width - viewBounds.width;
-    let y = this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING; // Convert to ints
+    let x = this.anchorRect.x + this.anchorRect.width - viewBounds.width
+    let y = this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING // Convert to ints
 
     // Convert to ints
     x = Math.floor(x)
