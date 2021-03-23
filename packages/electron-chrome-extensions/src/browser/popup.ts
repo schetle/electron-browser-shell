@@ -1,4 +1,4 @@
-import { BrowserWindow, Session, webContents } from 'electron'
+import { BrowserWindow, Session, WebContents } from 'electron'
 
 const debug = require('debug')('electron-chrome-extensions:popup')
 
@@ -13,7 +13,7 @@ interface PopupViewOptions {
   extensionId: string
   session: Session
   parent: BrowserWindow
-  sender: webContents
+  sender: WebContents
   url: string
   anchorRect: PopupAnchorRect
 }
@@ -30,7 +30,7 @@ export class PopupView {
 
   browserWindow?: BrowserWindow
   parent?: BrowserWindow
-  sender?: webContents
+  sender?: WebContents
   extensionId: string
 
   private anchorRect: PopupAnchorRect
@@ -181,35 +181,37 @@ export class PopupView {
   private updatePosition() {
     if (!this.browserWindow || !this.sender) return
 
-    if (this.sender) {
-      const webcontents = webContents.fromId(this.sender.id)
+    let x, y, winBounds
 
-      if (webcontents) {
-        const window = BrowserWindow.fromWebContents(webcontents)
+    if (this.sender) {
+      const webContents =  WebContents.fromId(this.sender.id)
+
+      if (webContents) {
+        const window =  BrowserWindow.fromWebContents(webContents)
         if (window) {
-          const winBounds = window.getBounds()
-          this.anchorRect.x = this.anchorRect.x + winBounds.x
-          this.anchorRect.y = this.anchorRect.y + winBounds.y
+          winBounds = window.getBounds()
         }
       }
     }
 
-    const viewBounds = this.browserWindow.getBounds() // TODO: support more orientations than just top-right
+    const viewBounds = this.browserWindow.getBounds()
 
-    let x = this.anchorRect.x + this.anchorRect.width - viewBounds.width
-    let y = this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING // Convert to ints
+    if (winBounds) {
+      x = winBounds.x + this.anchorRect.x + this.anchorRect.width - viewBounds.width
+      y = winBounds.y + this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING // Convert to ints
 
-    // Convert to ints
-    x = Math.floor(x)
-    y = Math.floor(y)
+      // Convert to ints
+      x = Math.floor(x)
+      y = Math.floor(y)
 
-    debug(`updatePosition`, { x, y })
+      debug(`updatePosition`, { x, y })
 
-    this.browserWindow.setBounds({
-      ...this.browserWindow.getBounds(),
-      x,
-      y,
-    })
+      this.browserWindow.setBounds({
+        ...this.browserWindow.getBounds(),
+        x,
+        y,
+      })
+    }
   }
 
   /** Backwards compat for Electron <12 */
