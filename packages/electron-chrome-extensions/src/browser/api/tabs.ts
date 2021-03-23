@@ -341,11 +341,11 @@ export class TabsAPI {
 
     const activeTab = this.store.getActiveTabFromWebContents(tab)
     const activeChanged = activeTab?.id !== tabId
-    if (!activeChanged) {
-      this.store.setActiveTab(tab)
-    }
+    if (!activeChanged) return
 
     const win = this.store.tabToWindow.get(tab)
+
+    this.store.setActiveTab(tab)
 
     // invalidate cache since 'active' has changed
     this.store.tabDetailsCache.forEach((tabInfo, cacheTabId) => {
