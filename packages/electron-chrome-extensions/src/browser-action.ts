@@ -34,9 +34,10 @@ export const injectBrowserAction = () => {
       partition: string,
       extensionId: string,
       tabId: number,
+      anchorWindowId: number,
       boundingRect: { x: number; y: number; width: number; height: number }
     ) => {
-      invoke('browserAction.activate', partition, extensionId, tabId, boundingRect)
+      invoke('browserAction.activate', partition, extensionId, tabId, anchorWindowId, boundingRect)
     },
 
     addObserver(partition: string) {
@@ -103,8 +104,43 @@ export const injectBrowserAction = () => {
         }
       }
 
+      get anchorWindow(): number {
+        const anchorWindowId = parseInt(this.getAttribute('anchorWindow') || '', 10)
+        return typeof anchorWindowId === 'number' && !isNaN(anchorWindowId) ? anchorWindowId : -1
+      }
+
+      set anchorWindow(anchorWindow: number) {
+        this.setAttribute('anchorWindow', `${anchorWindow}`)
+      }
+
+      get x(): number | null {
+        const x = parseInt(this.getAttribute('x') || '', 10)
+        return typeof x === 'number' && !isNaN(x) ? x : null
+      }
+
+      set x(x: number | null) {
+        if (typeof x === 'number') {
+          this.setAttribute('x', `${x}`)
+        } else {
+          this.removeAttribute('x')
+        }
+      }
+
+      get y(): number | null {
+        const y = parseInt(this.getAttribute('y') || '', 10)
+        return typeof y === 'number' && !isNaN(y) ? y : null
+      }
+
+      set y(y: number | null) {
+        if (typeof y === 'number') {
+          this.setAttribute('y', `${y}`)
+        } else {
+          this.removeAttribute('y')
+        }
+      }
+
       static get observedAttributes() {
-        return ['id', 'tab', 'partition']
+        return ['id', 'tab', 'partition', 'anchorWindow', 'x', 'y']
       }
 
       constructor() {
@@ -172,9 +208,9 @@ button:hover {
       private onClick() {
         const rect = this.getBoundingClientRect()
 
-        browserAction.activate(this.partition || DEFAULT_PARTITION, this.id, this.tab, {
-          x: rect.left,
-          y: rect.top,
+        browserAction.activate(this.partition || DEFAULT_PARTITION, this.id, this.tab, this.anchorWindow, {
+          x: this.x ? this.x : rect.left,
+          y: this.y ? this.y : rect.top,
           width: rect.width,
           height: rect.height,
         })
@@ -254,8 +290,43 @@ button:hover {
         }
       }
 
+      get anchorWindow(): number {
+        const anchorWindowId = parseInt(this.getAttribute('anchorWindow') || '', 10)
+        return typeof anchorWindowId === 'number' && !isNaN(anchorWindowId) ? anchorWindowId : -1
+      }
+
+      set anchorWindow(anchorWindow: number) {
+        this.setAttribute('anchorWindow', `${anchorWindow}`)
+      }
+
+      get x(): number | null {
+        const x = parseInt(this.getAttribute('x') || '', 10)
+        return typeof x === 'number' && !isNaN(x) ? x : null
+      }
+
+      set x(x: number | null) {
+        if (typeof x === 'number') {
+          this.setAttribute('x', `${x}`)
+        } else {
+          this.removeAttribute('x')
+        }
+      }
+
+      get y(): number | null {
+        const y = parseInt(this.getAttribute('y') || '', 10)
+        return typeof y === 'number' && !isNaN(y) ? y : null
+      }
+
+      set y(y: number | null) {
+        if (typeof y === 'number') {
+          this.setAttribute('y', `${y}`)
+        } else {
+          this.removeAttribute('y')
+        }
+      }
+
       static get observedAttributes() {
-        return ['tab', 'partition']
+        return ['tab', 'partition', 'anchorWindow', 'x', 'y']
       }
 
       constructor() {
@@ -319,6 +390,14 @@ button:hover {
       private update = (state: any) => {
         const tabId =
           typeof this.tab === 'number' && this.tab >= 0 ? this.tab : state.activeTabId || -1
+        const anchorWindowId =
+          typeof this.anchorWindow === 'number' && this.anchorWindow >= 0 ? this.anchorWindow : -1
+
+        const x =
+          typeof this.x === 'number' ? this.x : null
+
+        const y =
+          typeof this.y === 'number' ? this.y : null
 
         for (const action of state.actions) {
           let browserActionNode = this.shadowRoot?.querySelector(
@@ -336,6 +415,14 @@ button:hover {
 
           if (this.partition) browserActionNode.partition = this.partition
           browserActionNode.tab = tabId
+          browserActionNode.anchorWindow = this.anchorWindow
+          if (x) {
+            browserActionNode.x = x;
+          }
+
+          if (y) {
+            browserActionNode.y = y;
+          }
         }
       }
     }
