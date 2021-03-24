@@ -29,6 +29,7 @@ export class PopupView {
   browserWindow?: BrowserWindow
   parent?: BrowserWindow
   anchorWindow?: BrowserWindow
+  anchorWindowBounds: Electron.Rectangle | null
   extensionId: string
 
   private anchorRect: PopupAnchorRect
@@ -42,6 +43,9 @@ export class PopupView {
     this.extensionId = opts.extensionId
     this.anchorWindow = opts.anchorWindow
     this.anchorRect = opts.anchorRect
+
+    this.anchorWindowBounds = this.anchorWindow ? this.anchorWindow.getBounds() : this.parent ?
+      this.parent.getBounds() : null;
 
     this.browserWindow = new BrowserWindow({
       show: false,
@@ -177,13 +181,12 @@ export class PopupView {
   }
 
   private updatePosition() {
-    if (!this.browserWindow || !this.anchorWindow) return
+    if (!this.browserWindow || !this.anchorWindowBounds) return
 
-    const winBounds = this.anchorWindow.getBounds()
     const viewBounds = this.browserWindow.getBounds()
 
-    let x = winBounds.x + this.anchorRect.x
-    let y = winBounds.y + this.anchorRect.y
+    let x = this.anchorWindowBounds.x + this.anchorRect.x
+    let y = this.anchorWindowBounds.y + this.anchorRect.y
 
     // Convert to ints
     x = Math.floor(x)
