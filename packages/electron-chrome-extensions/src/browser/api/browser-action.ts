@@ -266,7 +266,6 @@ export class BrowserActionAPI {
         anchorWindow: anchorWin,
         url: popupUrl,
         anchorRect,
-        store: this.store,
       })
 
       debug(`opened popup: ${popupUrl}`)

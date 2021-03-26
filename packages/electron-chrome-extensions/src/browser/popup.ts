@@ -1,5 +1,4 @@
 import { BrowserWindow, Session } from 'electron'
-import {ExtensionStore} from "./store";
 
 const debug = require('debug')('electron-chrome-extensions:popup')
 
@@ -17,7 +16,6 @@ interface PopupViewOptions {
   anchorWindow: BrowserWindow
   url: string
   anchorRect: PopupAnchorRect
-  store: ExtensionStore
 }
 
 export class PopupView {
@@ -33,7 +31,6 @@ export class PopupView {
   anchorWindow?: BrowserWindow
   anchorWindowBounds: Electron.Rectangle | null
   extensionId: string
-  store: ExtensionStore
 
   private anchorRect: PopupAnchorRect
   private destroyed: boolean = false
@@ -46,7 +43,6 @@ export class PopupView {
     this.extensionId = opts.extensionId
     this.anchorWindow = opts.anchorWindow
     this.anchorRect = opts.anchorRect
-    this.store = opts.store
 
     this.anchorWindowBounds = this.anchorWindow ? this.anchorWindow.getBounds() : this.parent ?
       this.parent.getBounds() : null;
@@ -82,11 +78,6 @@ export class PopupView {
     this.browserWindow.on('blur', this.maybeClose)
     this.browserWindow.on('closed', this.destroy)
     this.parent.once('closed', this.destroy)
-
-    this.browserWindow.webContents.on('new-window', (event, url) => {
-      event.preventDefault()
-      return this.store.createTab({url: url, active:true})
-    });
 
     this.load(opts.url)
   }
