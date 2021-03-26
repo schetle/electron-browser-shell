@@ -14,5 +14,4 @@ export interface ChromeExtensionImpl {
 
   createWindow?(details: chrome.windows.CreateData): Promise<Electron.BrowserWindow>
   removeWindow?(window: Electron.BrowserWindow): void
-  newWindow?(details: chrome.windows.CreateData): Promise<Electron.BrowserWindow>
 }
