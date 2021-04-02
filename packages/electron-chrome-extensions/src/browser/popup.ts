@@ -75,6 +75,7 @@ export class PopupView {
     untypedWebContents.on('preferred-size-changed', this.updatePreferredSize)
 
     this.browserWindow.webContents.on('devtools-closed', this.maybeClose)
+    this.browserWindow.webContents.on('dom-ready', this.domReady)
     this.browserWindow.on('blur', this.maybeClose)
     this.browserWindow.on('closed', this.destroy)
     this.parent.once('closed', this.destroy)
@@ -103,21 +104,6 @@ export class PopupView {
       this.destroy()
       return
     }
-
-    if (!this.usingPreferredSize) {
-      this.setSize({width: PopupView.BOUNDS.minWidth, height: PopupView.BOUNDS.minHeight});
-
-      // Wait for content and layout to load
-      // Ideally we would wait for DOM to finish loading instead of a timeout which doesn't work reliably
-      // E.g.: grammarly depending on machine speed will not show up correctly, and will be locked at a smaller size cutting off content.
-      await new Promise((resolve) => setTimeout(resolve, 200))
-      if (this.destroyed) return
-
-      await this.queryPreferredSize()
-      if (this.destroyed) return
-    }
-
-    win.show()
   }
 
   destroy = () => {
@@ -174,6 +160,17 @@ export class PopupView {
     })
   }
 
+  private domReady = async () => {
+    const win = this.browserWindow!
+
+    if (!this.usingPreferredSize) {
+      this.setSize({width: PopupView.BOUNDS.minWidth, height: PopupView.BOUNDS.minHeight});
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      await this.queryPreferredSize()
+    }
+
+    win.show()
+  }
   private maybeClose = () => {
     // Keep open if webContents is being inspected
     if (!this.browserWindow?.isDestroyed() && this.browserWindow?.webContents.isDevToolsOpened()) {
@@ -220,33 +217,20 @@ export class PopupView {
     const rect = await this.browserWindow!.webContents.executeJavaScript(
       `((${() => {
 
-        // rect here will not always reflect truely what the content is, and sometimes
-        // reflects what the size of the client window was instead
-        // prior to this call, we'll set our window width/height to the minimum and if our bounding rect here is unchanged from that
-        // we will manually calculate children to get a more accurate width or height
-        let rect = document.body.getBoundingClientRect()
-        var children = document.body.children
+        var rect = {
+          width: 0,
+          height: 0
+        };
 
-        const defaultMinWidth = 25;
-        const defaultMinHeight = 25;
+        var body = document.body,
+            html = document.documentElement;
 
-        if (rect.width == defaultMinWidth) {
-          rect.width = 0;
-          for (var i = 0; i < children.length; i++) {
-            //@ts-ignore
-            rect.width += children[i].offsetWidth;
-          }
-        }
+        rect.width = Math.max(body.scrollWidth, body.offsetWidth,
+          html.clientWidth, html.scrollWidth, html.offsetWidth );
 
-        if (rect.height == defaultMinHeight) {
-          rect.height = 0;
-          for (var i = 0; i < children.length; i++) {
-            //@ts-ignore
-            rect.height += children[i].offsetHeight;
-          }
-        }
-
-        return { width: rect.width, height: rect.height }
+        rect.height = Math.max(body.scrollHeight, body.offsetHeight,
+          html.clientHeight, html.scrollHeight, html.offsetHeight );
+        return rect;
       }})())`
     )
 
