@@ -70,6 +70,7 @@ export class PopupView {
     untypedWebContents.on('preferred-size-changed', this.updatePreferredSize)
 
     this.browserWindow.webContents.on('devtools-closed', this.maybeClose)
+    this.browserWindow.webContents.on('dom-ready', this.domReady)
     this.browserWindow.on('blur', this.maybeClose)
     this.browserWindow.on('closed', this.destroy)
     this.parent.once('closed', this.destroy)
@@ -85,22 +86,6 @@ export class PopupView {
     } catch (e) {
       console.error(e)
     }
-
-    if (this.destroyed) return
-
-    if (!this.usingPreferredSize) {
-      // Set large initial size to avoid overflow
-      this.setSize({ width: PopupView.BOUNDS.maxWidth, height: PopupView.BOUNDS.maxHeight })
-
-      // Wait for content and layout to load
-      await new Promise((resolve) => setTimeout(resolve, 100))
-      if (this.destroyed) return
-
-      await this.queryPreferredSize()
-      if (this.destroyed) return
-    }
-
-    win.show()
   }
 
   destroy = () => {
@@ -157,6 +142,17 @@ export class PopupView {
     })
   }
 
+  private domReady = async () => {
+    const win = this.browserWindow!
+
+    if (!this.usingPreferredSize) {
+      this.setSize({width: PopupView.BOUNDS.minWidth, height: PopupView.BOUNDS.minHeight});
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      await this.queryPreferredSize()
+    }
+
+    win.show()
+  }
   private maybeClose = () => {
     // Keep open if webContents is being inspected
     if (!this.browserWindow?.isDestroyed() && this.browserWindow?.webContents.isDevToolsOpened()) {
@@ -204,8 +200,21 @@ export class PopupView {
 
     const rect = await this.browserWindow!.webContents.executeJavaScript(
       `((${() => {
-        const rect = document.body.getBoundingClientRect()
-        return { width: rect.width, height: rect.height }
+
+        var rect = {
+          width: 0,
+          height: 0
+        };
+
+        var body = document.body,
+            html = document.documentElement;
+
+          rect.width = Math.max( body.scrollWidth, body.offsetWidth,
+            html.clientWidth, html.scrollWidth, html.offsetWidth );
+
+          rect.height = Math.max( body.scrollHeight, body.offsetHeight,
+            html.clientHeight, html.scrollHeight, html.offsetHeight );
+        return rect;
       }})())`
     )
 
