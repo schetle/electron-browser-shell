@@ -1,4 +1,4 @@
-import { session } from 'electron'
+import { session, BrowserWindow } from 'electron'
 import { PopupAnchorRect, PopupView } from '../popup'
 import { ExtensionEvent } from '../router'
 import { ExtensionStore } from '../store'
@@ -227,6 +227,7 @@ export class BrowserActionAPI {
     { sender }: ExtensionEvent,
     extensionId: string,
     tabId: number,
+    anchorWindow: number,
     anchorRect: PopupAnchorRect
   ) {
     if (this.popup) {
@@ -254,10 +255,22 @@ export class BrowserActionAPI {
         throw new Error('Unable to get BrowserWindow from active tab')
       }
 
+      let anchorWin = null;
+
+      if (anchorWindow > -1) {
+        anchorWin = BrowserWindow.fromId(anchorWindow);
+      }
+
+      if (!anchorWin) {
+        // we'll use our parent window if there was no supplied anchor window
+        anchorWin = win;
+      }
+
       this.popup = new PopupView({
         extensionId,
         session: this.store.session,
         parent: win,
+        anchorWindow: anchorWin,
         url: popupUrl,
         anchorRect,
       })
