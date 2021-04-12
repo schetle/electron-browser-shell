@@ -115,12 +115,12 @@ export const injectBrowserAction = () => {
         const style = document.createElement('style')
         style.textContent = `
 button {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background-color: transparent;
   background-position: center;
   background-repeat: no-repeat;
-  background-size: 80%;
+  background-size: 70%;
   border: none;
   border-radius: 4px;
   padding: 0;
@@ -129,22 +129,23 @@ button {
 }
 
 button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--browser-action-hover-bg, rgba(255, 255, 255, 0.3));
 }
 
 .badge {
+  box-shadow: 0px 0px 1px 1px var(--browser-action-badge-outline, #444);
   box-sizing: border-box;
   max-width: 100%;
   height: 12px;
-  padding: 0 4px;
+  padding: 0 2px;
   border-radius: 2px;
   position: absolute;
-  bottom: 0;
+  bottom: 1px;
   right: 0;
   pointer-events: none;
-  line-height: 1.2;
-  font-size: 10px;
-  font-weight: 600;
+  line-height: 1.5;
+  font-size: 9px;
+  font-weight: 400;
   overflow: hidden;
   white-space: nowrap;
 }`
