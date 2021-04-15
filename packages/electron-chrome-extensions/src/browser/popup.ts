@@ -1,4 +1,4 @@
-import { BrowserWindow, Session } from 'electron'
+import { BrowserWindow, Session, WebContents } from 'electron'
 
 const debug = require('debug')('electron-chrome-extensions:popup')
 
@@ -13,6 +13,7 @@ interface PopupViewOptions {
   extensionId: string
   session: Session
   parent: BrowserWindow
+  sender: WebContents
   url: string
   anchorRect: PopupAnchorRect
 }
@@ -29,6 +30,7 @@ export class PopupView {
 
   browserWindow?: BrowserWindow
   parent?: BrowserWindow
+  sender?: WebContents
   extensionId: string
 
   private anchorRect: PopupAnchorRect
@@ -39,6 +41,7 @@ export class PopupView {
 
   constructor(opts: PopupViewOptions) {
     this.parent = opts.parent
+    this.sender = opts.sender
     this.extensionId = opts.extensionId
     this.anchorRect = opts.anchorRect
 
@@ -188,26 +191,39 @@ export class PopupView {
   }
 
   private updatePosition() {
-    if (!this.browserWindow || !this.parent) return
+    if (!this.browserWindow || !this.sender) return
 
-    const winBounds = this.parent.getBounds()
+    let x, y, winBounds
+
+    if (this.sender) {
+      const webContents =  WebContents.fromId(this.sender.id)
+
+      if (webContents) {
+        const window =  BrowserWindow.fromWebContents(webContents)
+        if (window) {
+          winBounds = window.getBounds()
+        }
+      }
+    }
+
     const viewBounds = this.browserWindow.getBounds()
 
-    // TODO: support more orientations than just top-right
-    let x = winBounds.x + this.anchorRect.x + this.anchorRect.width - viewBounds.width
-    let y = winBounds.y + this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING
+    if (winBounds) {
+      x = winBounds.x + this.anchorRect.x + this.anchorRect.width - viewBounds.width
+      y = winBounds.y + this.anchorRect.y + this.anchorRect.height + PopupView.POSITION_PADDING // Convert to ints
 
-    // Convert to ints
-    x = Math.floor(x)
-    y = Math.floor(y)
+      // Convert to ints
+      x = Math.floor(x)
+      y = Math.floor(y)
 
-    debug(`updatePosition`, { x, y })
+      debug(`updatePosition`, { x, y })
 
-    this.browserWindow.setBounds({
-      ...this.browserWindow.getBounds(),
-      x,
-      y,
-    })
+      this.browserWindow.setBounds({
+        ...this.browserWindow.getBounds(),
+        x,
+        y,
+      })
+    }
   }
 
   /** Backwards compat for Electron <12 */
